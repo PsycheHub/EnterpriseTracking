@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36301.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTracking.Api", "EnterpriseTracking.Api\EnterpriseTracking.Api.csproj", "{12F5A784-89DD-4A10-8FBD-BEA9A1C40C00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTracking.Core", "EnterpriseTracking.Core\EnterpriseTracking.Core.csproj", "{DD249408-09CB-4662-9870-416F732D2075}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTracking.Infrastructure", "EnterpriseTracking.Infrastructure\EnterpriseTracking.Infrastructure.csproj", "{7BE1858B-FF3F-4403-A96C-CD4C9D528400}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTrackingActivityAgent", "EnterpriseTrackingActivityAgent\EnterpriseTrackingActivityAgent.csproj", "{59BE4ACF-58FA-4AAD-866D-F7CBF38367DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTrackingAuthPipelineService", "EnterpriseTrackingAuthPipelineService\EnterpriseTrackingAuthPipelineService.csproj", "{ECAD0D0A-072E-4E60-ABB0-7941EA7F014F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnterpriseTrackingScreenCapture", "EnterpriseTrackingScreenCapture\EnterpriseTrackingScreenCapture.csproj", "{E7F3F161-D98E-AAF6-54FE-3EE748083173}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12F5A784-89DD-4A10-8FBD-BEA9A1C40C00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12F5A784-89DD-4A10-8FBD-BEA9A1C40C00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12F5A784-89DD-4A10-8FBD-BEA9A1C40C00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12F5A784-89DD-4A10-8FBD-BEA9A1C40C00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD249408-09CB-4662-9870-416F732D2075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD249408-09CB-4662-9870-416F732D2075}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD249408-09CB-4662-9870-416F732D2075}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD249408-09CB-4662-9870-416F732D2075}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE1858B-FF3F-4403-A96C-CD4C9D528400}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE1858B-FF3F-4403-A96C-CD4C9D528400}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE1858B-FF3F-4403-A96C-CD4C9D528400}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE1858B-FF3F-4403-A96C-CD4C9D528400}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59BE4ACF-58FA-4AAD-866D-F7CBF38367DF}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{59BE4ACF-58FA-4AAD-866D-F7CBF38367DF}.Debug|Any CPU.Build.0 = Debug|x64
+		{59BE4ACF-58FA-4AAD-866D-F7CBF38367DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59BE4ACF-58FA-4AAD-866D-F7CBF38367DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECAD0D0A-072E-4E60-ABB0-7941EA7F014F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECAD0D0A-072E-4E60-ABB0-7941EA7F014F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECAD0D0A-072E-4E60-ABB0-7941EA7F014F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECAD0D0A-072E-4E60-ABB0-7941EA7F014F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7F3F161-D98E-AAF6-54FE-3EE748083173}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E7F3F161-D98E-AAF6-54FE-3EE748083173}.Debug|Any CPU.Build.0 = Debug|x64
+		{E7F3F161-D98E-AAF6-54FE-3EE748083173}.Release|Any CPU.ActiveCfg = Release|x64
+		{E7F3F161-D98E-AAF6-54FE-3EE748083173}.Release|Any CPU.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1B837753-65C1-46D2-8AE1-E080C5C648C2}
+	EndGlobalSection
+EndGlobal

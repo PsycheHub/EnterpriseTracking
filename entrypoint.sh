@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # Export environment variables from Render's mounted secret files
 declare -A secrets=(

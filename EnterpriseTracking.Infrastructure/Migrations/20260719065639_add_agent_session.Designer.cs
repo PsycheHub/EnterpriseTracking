@@ -3,6 +3,7 @@ using System;
 using EnterpriseTracking.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EnterpriseTracking.Infrastructure.Migrations
 {
     [DbContext(typeof(EnterpriseTrackingContext))]
-    partial class EnterpriseTrackingContextModelSnapshot : ModelSnapshot
+    [Migration("20260719065639_add_agent_session")]
+    partial class add_agent_session
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

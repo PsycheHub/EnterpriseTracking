@@ -9,19 +9,70 @@ namespace EnterpriseTrackingActivityAgent
     {
         private readonly ILogger<TrayApplicationContext> _logger;
         private readonly AgentService _agentService;
+        private readonly SessionManager _sessionManager;
         private NotifyIcon? _trayIcon;
         private readonly ToolStripMenuItem _statusMenuItem;
         private ToolStripMenuItem? _autoStartMenuItem;
 
-        public TrayApplicationContext(ILogger<TrayApplicationContext> logger, AgentService agentService)
+        public TrayApplicationContext(
+            ILogger<TrayApplicationContext> logger,
+            AgentService agentService,
+            SessionManager sessionManager)
         {
             _logger = logger;
             _agentService = agentService;
+            _sessionManager = sessionManager;
 
-            _statusMenuItem = new ToolStripMenuItem("Status: Running");
+            _statusMenuItem = new ToolStripMenuItem("Status: Authenticating…");
 
             InitializeTrayIcon();
+
+            // Show login form immediately on the STA thread before the message pump starts.
+            // ShowDialog() runs its own modal message pump, so this works fine here.
+            if (!ShowLoginAndAuthenticate())
+            {
+                _trayIcon!.Visible = false;
+                Environment.Exit(0);
+                return;
+            }
+
             StartAgent();
+        }
+
+        /// <summary>
+        /// Shows the login form, retrying up to 3 times on bad credentials.
+        /// Returns true when authenticated, false when the user cancels.
+        /// </summary>
+        private bool ShowLoginAndAuthenticate()
+        {
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                using var form = new LoginForm();
+                if (attempt > 1)
+                    form.ShowError("Invalid credentials or server error. Please try again.");
+
+                if (form.ShowDialog() != DialogResult.OK)
+                {
+                    _logger.LogWarning("Login cancelled by user.");
+                    return false;
+                }
+
+                bool ok = _sessionManager
+                    .EnsureSessionAsync(form.Username, form.Password, form.Voucher)
+                    .GetAwaiter().GetResult();
+
+                if (ok) return true;
+
+                _logger.LogWarning("Authentication attempt {Attempt} failed.", attempt);
+            }
+
+            MessageBox.Show(
+                "Could not authenticate after 3 attempts. The agent will now exit.",
+                "Authentication Failed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return false;
         }
 
         private void InitializeTrayIcon()

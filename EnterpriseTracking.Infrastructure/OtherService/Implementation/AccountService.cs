@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
 
 namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
 {
@@ -21,6 +22,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         private readonly IHelperServ _helperServ;
         private readonly ILogger<AccountService> _logger;
         private readonly IEnterpriseTrackingGenericRepo<Voucher> _voucherRepo;
+        private readonly IEnterpriseTrackingGenericRepo<AgentSession> _agentSessionRepo;
         private readonly IGenerateJwt _generateJwt;
         private readonly IEncryptionService _encryption;
         private readonly IConfiguration _configuration;
@@ -32,9 +34,9 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             IEmailServiceViaGmail emailServices,
          IHelperServ helperServ,
             IEncryptionService encryption,
-            IConfiguration configuration
-,
-            IEnterpriseTrackingGenericRepo<Voucher> voucherRepo)
+            IConfiguration configuration,
+            IEnterpriseTrackingGenericRepo<Voucher> voucherRepo,
+            IEnterpriseTrackingGenericRepo<AgentSession> agentSessionRepo)
         {
             _accountRepo = accountRepo;
             _logger = logger;
@@ -44,6 +46,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             _configuration = configuration;
             _encryption = encryption;
             _voucherRepo = voucherRepo;
+            _agentSessionRepo = agentSessionRepo;
         }
 
         public async Task<ResponseDto<string>> RegisterUser(SignUp signUp, string Role)
@@ -328,7 +331,7 @@ Password :: {generatePassowrd},
                     response.DisplayMessage = "Error";
                     return response;
                 }
-                if (checkUserExist.IsVoucherLinked == false)
+               /* if (checkUserExist.IsVoucherLinked == false)
                 {
                     response.ErrorMessages = new List<string>() { "Account not yet linked, pls contact admin to linked voucher to your account" };
                     response.StatusCode = 400;
@@ -359,7 +362,7 @@ Password :: {generatePassowrd},
 
                     _voucherRepo.Update(checkUserExist.Voucher);
                     await _voucherRepo.SaveChanges();
-                }
+                }*/
                 checkUserExist.Status = UserStatus.Active.ToString();
                 checkUserExist.LastLoginTime = DateTime.UtcNow;
                 await _accountRepo.UpdateUserInfo(checkUserExist);
@@ -374,9 +377,30 @@ Password :: {generatePassowrd},
                 }
 
                 var getUserRole = await _accountRepo.GetUserRoles(checkUserExist);
+
+                var tokenBytes = System.Text.Encoding.UTF8.GetBytes(generateToken);
+                var tokenHash = Convert.ToBase64String(SHA256.HashData(tokenBytes));
+                var expiresAt = DateTime.UtcNow.AddDays(2);
+
+                var session = new AgentSession
+                {
+                    UserId = checkUserExist.Id,
+                    MachineName = Environment.MachineName,
+                    TokenHash = tokenHash,
+                    LoginTime = DateTime.UtcNow,
+                    ExpiresAt = expiresAt
+                };
+                await _agentSessionRepo.Add(session);
+                await _agentSessionRepo.SaveChanges();
+
                 response.StatusCode = StatusCodes.Status200OK;
                 response.DisplayMessage = "Successfully login";
-                response.Result = new LoginResultDto() { Jwt = generateToken, UserRole = getUserRole };
+                response.Result = new LoginResultDto()
+                {
+                    Jwt = generateToken,
+                    UserId = checkUserExist.Id,
+                    UserRole = getUserRole
+                };
                 return response;
             }
             catch (Exception ex)

@@ -25,6 +25,7 @@ try
         builder.ClearProviders();
         builder.AddSerilog(dispose: true);
     });
+    services.AddSingleton<SessionManager>();
     services.AddSingleton<ApiSender>();
     services.AddSingleton<AgentService>();
     services.AddSingleton<TrayApplicationContext>();

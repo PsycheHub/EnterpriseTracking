@@ -9,21 +9,29 @@ namespace EnterpriseTrackingActivityAgent.Services
     {
         private readonly RestClient _client;
         private readonly ILogger<ApiSender> _logger;
+        private readonly SessionManager _sessionManager;
 
         private readonly string _activityEndpoint = "/api/activity/publish";
         private readonly string _screenshotEndpoint = "/api/activity/upload-screenshot";
 
-        public ApiSender(ILogger<ApiSender> logger)
+        public ApiSender(ILogger<ApiSender> logger, SessionManager sessionManager)
         {
             _logger = logger;
+            _sessionManager = sessionManager;
 
-            var options = new RestClientOptions("https://enterprise-tracking-0ibo.onrender.com")
+            var options = new RestClientOptions("https://enterprisetracking.onrender.com/")
             {
                 // ⚠️ Only enable in development if needed
                 // RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
             };
 
             _client = new RestClient(options);
+        }
+
+        private void AddAuthHeader(RestRequest request)
+        {
+            if (!string.IsNullOrEmpty(_sessionManager.CurrentToken))
+                request.AddHeader("Authorization", $"Bearer {_sessionManager.CurrentToken}");
         }
 
         public async Task<bool> SendFileAsync(string filePath)
@@ -50,6 +58,7 @@ namespace EnterpriseTrackingActivityAgent.Services
 
                     var request = new RestRequest(_screenshotEndpoint, Method.Post);
                     request.AddFile("File", filePath);
+                    AddAuthHeader(request);
 
                     _logger.LogInformation("Uploading screenshot: {FilePath}", filePath);
 
@@ -93,6 +102,7 @@ namespace EnterpriseTrackingActivityAgent.Services
 
                     var request = new RestRequest(_activityEndpoint, Method.Post);
                     request.AddHeader("Content-Type", "application/json");
+                    request.AddHeader("Authorization", $"Bearer {_sessionManager.CurrentToken}");
                     request.AddStringBody(json, DataFormat.Json);
 
                     _logger.LogInformation("Sending activity event");

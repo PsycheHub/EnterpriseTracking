@@ -1,14 +1,13 @@
 ﻿using EnterpriseTrackingActivityAgent.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic.ApplicationServices;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace EnterpriseTrackingActivityAgent
 {
     public class AgentService
     {
         private readonly ILogger<AgentService> _logger;
+        private readonly SessionManager _sessionManager;
 
         private System.Timers.Timer? timer;
         private bool isRunning = false;
@@ -24,162 +23,12 @@ namespace EnterpriseTrackingActivityAgent
         private string? currentApp;
         private string? currentTitle;
         private DateTime start;
-        private string? cachedDeviceName;
-        private DateTime cachedDeviceNameExpiresAt = DateTime.MinValue;
-        private static readonly TimeSpan DeviceNameCacheDuration = TimeSpan.FromDays(1);
-        public AgentService(ILogger<AgentService> logger, ApiSender sender)
+
+        public AgentService(ILogger<AgentService> logger, ApiSender sender, SessionManager sessionManager)
         {
             _logger = logger;
             this.sender = sender;
-        }
-
-        private string? GetCurrentUserId()
-        {
-            
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "EnterpriseTrackingAgent",
-                "current_user_id.txt");
-
-            _logger.LogInformation("Attempting to read user ID from: {Path}", path);
-
-            // Retry up to 5 times (useful if the file is created after login)
-
-            for (int attempt = 1; attempt <= 5; attempt++)
-            {
-              
-                try
-                {
-                   
-                    if (File.Exists(path))
-                    {
-                        // Try UTF-8 first (new format from C++ provider)
-                        string userId = File.ReadAllText(path, Encoding.UTF8).Trim();
-                        _logger.LogDebug("Raw user ID (UTF8): '{UserId}'", userId);
-
-                        if (!string.IsNullOrEmpty(userId))
-                        {
-                            _logger.LogInformation("User ID successfully read: {UserId}", userId);
-                           
-                            return userId;
-                        }
-
-                        // Fallback: UTF-16LE
-                        byte[] raw = File.ReadAllBytes(path);
-                        if (raw.Length >= 2 && raw[0] == 0xFF && raw[1] == 0xFE)
-                        {
-                            userId = Encoding.Unicode.GetString(raw).Trim();
-                            _logger.LogDebug("Raw user ID (UTF16 with BOM): '{UserId}'", userId);
-                        }
-                        else
-                        {
-                            userId = Encoding.Unicode.GetString(raw).Trim();
-                            _logger.LogDebug("Raw user ID (UTF16 no BOM): '{UserId}'", userId);
-                        }
-
-                        if (!string.IsNullOrEmpty(userId))
-                        {
-                            _logger.LogInformation("User ID successfully read (fallback): {UserId}", userId);
-                            return userId;
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("User ID file not found at {Path} (attempt {Attempt}/5)", path, attempt);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error reading UserId file (attempt {Attempt}/5)", attempt);
-                }
-
-                if (attempt < 5)
-                    Thread.Sleep(2000);
-            }
-
-            _logger.LogError("Failed to obtain a valid UserId after 5 attempts.");
-            return null;
-        }
-        private string? GetCurrentDeviceName()
-        {
-            if (!string.IsNullOrWhiteSpace(cachedDeviceName) &&
-                cachedDeviceNameExpiresAt > DateTime.UtcNow)
-            {
-                _logger.LogDebug("Using cached computer name: {DeviceName}", cachedDeviceName);
-                return cachedDeviceName;
-            }
-
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "EnterpriseTrackingAgent",
-                "current_device.txt");
-
-            _logger.LogInformation("Attempting to read computer name from: {Path}", path);
-
-            for (int attempt = 1; attempt <= 5; attempt++)
-            {
-                try
-                {
-                    if (File.Exists(path))
-                    {
-                        string deviceName = File.ReadAllText(path, Encoding.UTF8).Trim();
-                        _logger.LogDebug("Raw computer name (UTF8): '{DeviceName}'", deviceName);
-
-                        if (!string.IsNullOrWhiteSpace(deviceName))
-                        {
-                            cachedDeviceName = deviceName;
-                            cachedDeviceNameExpiresAt = DateTime.UtcNow.Add(DeviceNameCacheDuration);
-
-                            _logger.LogInformation(
-                                "Computer name successfully read and cached until {ExpiresAt}: {DeviceName}",
-                                cachedDeviceNameExpiresAt,
-                                cachedDeviceName);
-
-                            return cachedDeviceName;
-                        }
-
-                        byte[] raw = File.ReadAllBytes(path);
-
-                        deviceName = Encoding.Unicode.GetString(raw).Trim();
-                        _logger.LogDebug("Raw computer name (UTF16 fallback): '{DeviceName}'", deviceName);
-
-                        if (!string.IsNullOrWhiteSpace(deviceName))
-                        {
-                            cachedDeviceName = deviceName;
-                            cachedDeviceNameExpiresAt = DateTime.UtcNow.Add(DeviceNameCacheDuration);
-
-                            _logger.LogInformation(
-                                "Computer name successfully read and cached until {ExpiresAt}: {DeviceName}",
-                                cachedDeviceNameExpiresAt,
-                                cachedDeviceName);
-
-                            return cachedDeviceName;
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Computer name file not found at {Path} (attempt {Attempt}/5)", path, attempt);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error reading computer name file (attempt {Attempt}/5)", attempt);
-                }
-
-                if (attempt < 5)
-                {
-                    Thread.Sleep(2000);
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(cachedDeviceName))
-            {
-                _logger.LogWarning("Using previously cached computer name after file read failure: {DeviceName}", cachedDeviceName);
-                return cachedDeviceName;
-            }
-
-            _logger.LogError("Failed to obtain a valid computer name after 5 attempts.");
-            return null;
+            _sessionManager = sessionManager;
         }
 
         public void Start()
@@ -218,7 +67,7 @@ namespace EnterpriseTrackingActivityAgent
                 isRunning = true;
 
                 var active = window.GetActiveWindow();
-                string? userId = GetCurrentUserId();
+                string? userId = _sessionManager.CurrentUserId;
 
                 if (currentApp == null)
                 {
@@ -234,12 +83,10 @@ namespace EnterpriseTrackingActivityAgent
                 {
                     if (!string.IsNullOrEmpty(userId))
                     {
-                        var deviceName = GetCurrentDeviceName() ?? Environment.MachineName;
-
                         var ev = new ActivityEvent
                         {
                             UserId = userId,
-                            MachineId = deviceName,
+                            MachineId = Environment.MachineName,
                             AppName = currentApp,
                             WindowTitle = currentTitle,
                             StartTime = start,
@@ -264,7 +111,7 @@ namespace EnterpriseTrackingActivityAgent
                     }
                     else
                     {
-                        _logger.LogWarning("Skipping event because UserId is null.");
+                        _logger.LogWarning("Skipping event because UserId is null (no active session).");
                     }
 
                     currentApp = active.app;

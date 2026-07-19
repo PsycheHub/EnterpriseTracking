@@ -55,7 +55,8 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             {
                 var catId = String.Empty;
                 var findCategory = await _mapAppCategoryRepo.GetQueryable().
-                    FirstOrDefaultAsync(u => u.Name.ToLower() == req.AppName.ToLower()
+                    FirstOrDefaultAsync(u => u.Name.ToLower() == req.WindowTitle.ToLower() 
+                    || u.Name.ToLower() == req.AppName.ToLower()
                     && u.IsDeleted != true);
                 if (findCategory == null)
                 {

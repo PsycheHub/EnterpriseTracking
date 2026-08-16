@@ -13,6 +13,7 @@ namespace EnterpriseTracking.Infrastructure.Context
         public DbSet<MapAppCatories> MapAppCatories { get; set; }
         public DbSet<UserActivity> UserActivity { get; set; }
         public DbSet<AgentSession> AgentSessions { get; set; }
+        public DbSet<ThirdPartyClient> ThirdPartyClients { get; set; }
         public EnterpriseTrackingContext(DbContextOptions options) : base(options) { }
     }
 }

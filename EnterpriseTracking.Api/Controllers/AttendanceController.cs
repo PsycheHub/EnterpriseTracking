@@ -1,10 +1,14 @@
 ﻿using EnterpriseTracking.Api.Controllers.Base;
 using EnterpriseTracking.Core.Enum;
 using EnterpriseTracking.Core.OtherService.Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseTracking.Api.Controllers
 {
+    /// <summary>Attendance records, trend analytics, and export.</summary>
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AttendanceRead")]
     [Route("api/attendance")]
     [ApiController]
     public class AttendanceController : BaseController

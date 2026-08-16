@@ -99,11 +99,8 @@ namespace EnterpriseTrackingActivityAgent
             _autoStartMenuItem.Click += (s, e) => ToggleAutoStart();
             _trayIcon.ContextMenuStrip.Items.Add(_autoStartMenuItem);
 
-            _trayIcon.ContextMenuStrip.Items.Add("Open Log Folder", null, (s, e) => OpenLogFolder());
             _trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             _trayIcon.ContextMenuStrip.Items.Add("Exit", null, (s, e) => ExitApplication());
-
-            _trayIcon.DoubleClick += (s, e) => OpenLogFolder();
 
             _logger.LogInformation("Tray icon initialized.");
         }

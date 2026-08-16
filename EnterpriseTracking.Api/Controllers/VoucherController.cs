@@ -4,10 +4,14 @@ using EnterpriseTracking.Core.Dto.Request.Voucher;
 using EnterpriseTracking.Core.Dto.Response;
 using EnterpriseTracking.Core.OtherService.Interface;
 using EnterpriseTracking.Infrastructure.OtherService.Implementation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseTracking.Api.Controllers
 {
+    /// <summary>Voucher lifecycle management — create, link, extend, and delete agent access vouchers.</summary>
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/voucher")]
     [ApiController]
     public class VoucherController : BaseController
@@ -19,6 +23,7 @@ namespace EnterpriseTracking.Api.Controllers
             _voucherService = voucherService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateVoucherAsync([FromQuery] int validatyDays)
         {
@@ -26,6 +31,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("lifecycle/extend")]
         public async Task<IActionResult> ExtendVoucherLifcycleAsync(
             [FromQuery] string voucherId,
@@ -35,6 +41,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteVoucherAsync([FromQuery] string voucherId)
         {
@@ -42,6 +49,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("link")]
         public async Task<IActionResult> LinkVoucherAsync(
             [FromQuery] string voucherId,
@@ -51,6 +59,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("unlink")]
         public async Task<IActionResult> UnLinkVoucherAsync([FromQuery] string voucherId)
         {
@@ -58,6 +67,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "VouchersRead")]
         [HttpGet("list")]
         public async Task<IActionResult> PaginateVoucherAsync(
             [FromQuery] int pageNumber,
@@ -74,6 +84,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "VouchersRead")]
         [HttpGet("metrics")]
         public async Task<IActionResult> GetVoucherMetricsAsync()
         {
@@ -81,6 +92,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("user/export")]
         public async Task<IActionResult> ExportVoucher(ExportVoucherDto request)
         {

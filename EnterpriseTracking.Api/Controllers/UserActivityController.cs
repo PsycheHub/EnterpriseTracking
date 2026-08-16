@@ -2,11 +2,14 @@
 using EnterpriseTracking.Core.Dto.Request.ComputerActivity;
 using EnterpriseTracking.Core.Enum;
 using EnterpriseTracking.Core.OtherService.Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseTracking.Api.Controllers
 {
-
+    /// <summary>Desktop activity tracking — publish events, manage categories, and retrieve analytics.</summary>
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/activity")]
     public class UserActivityController : BaseController
     {
@@ -17,6 +20,8 @@ namespace EnterpriseTracking.Api.Controllers
             _activityService = activityService;
         }
 
+        /// <summary>Called by the desktop agent to publish a new activity event.</summary>
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("publish")]
         public async Task<IActionResult> CreateUserActivity([FromBody] CreateUserActivityReqDto req)
         {
@@ -24,6 +29,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("category/create")]
         public async Task<IActionResult> CreateActivityCategory([FromBody] CreateActivityCategoryReqDto req)
         {
@@ -31,6 +37,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("category/update")]
         public async Task<IActionResult> UpdateActivityCategory([FromBody] UpdateActivityCategoryReqDto req)
         {
@@ -38,6 +45,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("category/list")]
         public async Task<IActionResult> PaginateActivityCategories(
             [FromQuery] int pageNumber,
@@ -51,6 +59,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("dashboard/metrics/top")]
         public async Task<IActionResult> GetActivityMetricChart(string? userId = null,
      DateTime? fromDate = null,
@@ -60,6 +69,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("dashboard/chart/metrics" 
            )]
         public async Task<IActionResult> GetActivityBreakdownChart(string? userId = null,
@@ -70,6 +80,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("dashboard/metrics/trend")]
         public async Task<IActionResult> GetActivityTrend(TrendRange range, string? userId)
         {
@@ -78,6 +89,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("app-category/create")]
         public async Task<IActionResult> CreateMapAppCategory([FromBody] CreateMapAppCategoryReqDto req)
         {
@@ -85,6 +97,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("app-category/update")]
         public async Task<IActionResult> UpdateMapAppCategory([FromBody] UpdateMapAppCategoryReqDto req)
         {
@@ -92,12 +105,14 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("app-category/{id}")]
         public async Task<IActionResult> GetMapAppCategoryById(string id)
         {
             var result = await _activityService.GetMapAppCategoryById(id);
             return HandleResponse(result);
         }
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("upload-screenshot")]
         public async Task<IActionResult> UploadProofOfActivity(IFormFile File)
         {
@@ -105,6 +120,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("app-category/{id}")]
         public async Task<IActionResult> DeleteMapAppCategory(string id)
         {
@@ -112,6 +128,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("app-category/list")]
         public async Task<IActionResult> PaginateMapAppCategories(
             [FromQuery] int pageNumber,
@@ -127,6 +144,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("user/rank")]
         public async Task<IActionResult> PaginateUserActivity(
             [FromQuery] int pageNumber,
@@ -142,6 +160,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("user/app/activities")]
         public async Task<IActionResult> PaginateUserAppActivity(
             [FromQuery] int pageNumber,
@@ -155,6 +174,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("app/bar/all")]
         public async Task<IActionResult> GetUserAppBarchartActivities(
              string? userId = null,
@@ -168,6 +188,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("app/proof")]
         public async Task<IActionResult> PaginateProofUserActivitiesAsync(
             int pageNumber,
@@ -189,6 +210,7 @@ namespace EnterpriseTracking.Api.Controllers
 
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("app/proof/data/image")]
         public async Task<IActionResult> PaginateProofUserActivitiesImageDataAsync(
             int pageNumber,
@@ -211,6 +233,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("file")]
         public async Task<IActionResult> GetImageFile(string FileIdentifier)
         {
@@ -232,12 +255,14 @@ namespace EnterpriseTracking.Api.Controllers
                 return BadRequest(result);
             }
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("dashboard/metrics/summary")]
         public async Task<IActionResult> GetDashboardMetrics([FromQuery] TrendRange range)
         {
             var result = await _activityService.GetDashboardMetrics(range);
             return HandleResponse(result);
         }
+        [Authorize(Policy = "ActivityRead")]
         [HttpGet("dashboard/metrics/insights")]
         public async Task<IActionResult> GetActivityInsightMetrics([FromQuery] TrendRange range, [FromQuery] string? userId = null)
         {

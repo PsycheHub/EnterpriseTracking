@@ -22,6 +22,7 @@ namespace ZedSystem.Api.Extension
             services.AddSingleton<IEmailServiceViaGmail, EmailServiceViaGmail>();
             services.AddScoped<IUserActivityService, UserActivityService>();
             services.AddScoped<IAttendanceService, AttendanceService>();
+            services.AddScoped<IThirdPartyClientService, ThirdPartyClientService>();
            
 
         }

@@ -23,7 +23,7 @@ namespace EnterpriseTracking.Api.Controllers
             _voucherService = voucherService;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateVoucherAsync([FromQuery] int validatyDays)
         {
@@ -31,7 +31,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("lifecycle/extend")]
         public async Task<IActionResult> ExtendVoucherLifcycleAsync(
             [FromQuery] string voucherId,
@@ -41,7 +41,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteVoucherAsync([FromQuery] string voucherId)
         {
@@ -49,7 +49,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("link")]
         public async Task<IActionResult> LinkVoucherAsync(
             [FromQuery] string voucherId,
@@ -59,7 +59,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("unlink")]
         public async Task<IActionResult> UnLinkVoucherAsync([FromQuery] string voucherId)
         {
@@ -92,7 +92,7 @@ namespace EnterpriseTracking.Api.Controllers
             return HandleResponse(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("user/export")]
         public async Task<IActionResult> ExportVoucher(ExportVoucherDto request)
         {

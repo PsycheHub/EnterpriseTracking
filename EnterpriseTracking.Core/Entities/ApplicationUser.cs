@@ -5,8 +5,8 @@ namespace EnterpriseTracking.Core.Entities
 {
     public class ApplicationUser : IdentityUser
     {
-
-
+        public string CompanyId { get; set; } = string.Empty;
+        public Company Company { get; set; } = null!;
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Status { get; set; } = UserStatus.Invited.ToString();

@@ -31,7 +31,8 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         new Claim(ClaimTypes.Email, user.Email),
         new Claim(JwtRegisteredClaimNames.Jti, user.Id),
         new Claim(ClaimTypes.Name, name),
-        new Claim(ClaimTypes.UserData, user.Id)
+        new Claim(ClaimTypes.UserData, user.Id),
+        new Claim("company_id", user.CompanyId)
     };
             foreach (var role in roles)
             {

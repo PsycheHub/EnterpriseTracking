@@ -19,17 +19,20 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         private readonly ILogger<VoucherService> _logger;
         private readonly IEnterpriseTrackingGenericRepo<Voucher> _voucherRepo;
         private readonly IAccountRepo _accountRepo;
+        private readonly ITenantContext _tenantContext;
         public VoucherService(IHelperServ helperServ,
             ILogger<VoucherService> logger,
             IEnterpriseTrackingGenericRepo<Voucher> voucherRepo,
             IAccountRepo accountRepo,
-            IEmailServiceViaGmail emailServices)
+            IEmailServiceViaGmail emailServices,
+            ITenantContext tenantContext)
         {
             _helperServ = helperServ;
             _logger = logger;
             _voucherRepo = voucherRepo;
             _accountRepo = accountRepo;
             _emailServices = emailServices;
+            _tenantContext = tenantContext;
         }
 
         public async Task<ResponseDto<string>> CreateVoucher(int validatyDays)
@@ -42,6 +45,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
                 var expiryDate = now.AddDays(validatyDays);
                 await _voucherRepo.Add(new Voucher()
                 {
+                    CompanyId = _tenantContext.CompanyId ?? throw new InvalidOperationException("A company account is required"),
                     Code = "VCH-" + _helperServ.GenerateRandomString(8),
                     ExpiredDate = expiryDate,
                 });

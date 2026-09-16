@@ -2,6 +2,7 @@ namespace EnterpriseTracking.Core.Entities
 {
     public class ThirdPartyClient : BaseEntity
     {
+        public string CompanyId { get; set; } = string.Empty;
         public string AppName { get; set; } = string.Empty;
         public string ContactEmail { get; set; } = string.Empty;
         public string ClientId { get; set; } = string.Empty;

@@ -26,6 +26,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         private readonly IEnterpriseTrackingGenericRepo<Voucher> _voucherRepo;
         private readonly IEnterpriseTrackingGenericRepo<Attendance> _attendanceRepo;
         private readonly IHelperServ _helperServ;
+        private readonly ITenantContext _tenantContext;
 
         public UserActivityService(ILogger<UserActivityService> logger,
             IEnterpriseTrackingGenericRepo<UserActivity> userActivityRepo,
@@ -34,7 +35,8 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             IEnterpriseTrackingGenericRepo<ProofOfActivity> proofOfActivityRepo,
             
     IEnterpriseTrackingGenericRepo<Voucher> voucherRepo,
-            IEnterpriseTrackingGenericRepo<Attendance> attendanceRepo, EnterpriseTrackingContext context)
+            IEnterpriseTrackingGenericRepo<Attendance> attendanceRepo, EnterpriseTrackingContext context,
+            ITenantContext tenantContext)
         {
             _logger = logger;
             _userActivityRepo = userActivityRepo;
@@ -46,6 +48,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             _voucherRepo = voucherRepo;
             _attendanceRepo = attendanceRepo;
             _context = context;
+            _tenantContext = tenantContext;
         }
         public async Task<ResponseDto<string>> CreateUserActivity(CreateUserActivityReqDto req)
         {
@@ -53,6 +56,14 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
 
             try
             {
+                if (_tenantContext.UserId != req.UserId ||
+                    !await _context.Users.AnyAsync(x => x.Id == req.UserId && !x.IsSuspend && !x.IsDeleted))
+                {
+                    response.StatusCode = StatusCodes.Status403Forbidden;
+                    response.DisplayMessage = "Activity can only be published for the authenticated user";
+                    return response;
+                }
+
                 var catId = String.Empty;
                 var findCategory = await _mapAppCategoryRepo.GetQueryable().
                     FirstOrDefaultAsync(u => u.Name.ToLower() == req.WindowTitle.ToLower() 

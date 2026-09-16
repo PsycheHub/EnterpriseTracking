@@ -195,6 +195,69 @@ A Windows background service that handles secure authentication handoff between 
 
 ---
 
+## AI Intelligence Layer (Planned Roadmap)
+
+The platform is designed to be extended with a suite of AI-powered agents that operate on top of the existing activity, attendance, and task data. Each capability below is a standalone AI Agent module that can be licensed separately or bundled as a complete AI Suite.
+
+> **Status:** Planned — not yet implemented. These agents are the next major product milestone and will be scoped, architected, and built in a dedicated phase.
+
+---
+
+### AI Agent 1 — Daily Task Allocation Agent
+
+Collates all pending and newly created tasks each day and intelligently distributes them among employees based on their roles, current workload, and task priorities. When integrated with an HR system, the agent gains access to employee profiles, leave status, and skill sets to make even smarter allocation decisions. No manual assignment is needed — the agent handles distribution automatically at the start of each business day.
+
+**Value delivered:** Eliminates manual task allocation bottlenecks. Ensures no employee is overloaded while others are underutilized. Directly boosts team throughput.
+
+---
+
+### AI Agent 2 — Task Monitoring & Reminders Agent
+
+Continuously monitors the progress of all assigned tasks in real time. When a task is delayed, inactive for an unusual period, or appears to have been abandoned, the agent automatically sends targeted reminders to the responsible employee and, where appropriate, escalates to their manager. Reminder cadence and escalation thresholds are configurable per organization.
+
+**Value delivered:** Reduces task abandonment and deadline misses. Creates a self-managing accountability loop without requiring managers to manually chase employees.
+
+---
+
+### AI Agent 3 — Performance & KPI Analysis Agent
+
+Analyses employee activity logs, completed tasks, turnaround times, idle ratios, attendance consistency, application usage patterns, and other relevant metrics collected by the platform. From this data, the agent computes individual and team-level KPI scores and generates structured monthly performance reports. Reports highlight high performers, flag employees who are underperforming, and surface trends that would otherwise require hours of manual analysis.
+
+**Value delivered:** Replaces manual KPI spreadsheets. Gives HR and management objective, data-backed performance insights on a monthly cadence with zero manual effort.
+
+---
+
+### AI Agent 4 — Management Reporting Agent
+
+Automatically compiles and delivers comprehensive monthly performance reports directly to designated management stakeholders. Reports cover team achievements, outstanding and overdue tasks, productivity trends, attendance summaries, and areas requiring management attention. Reports are formatted for executive consumption — clear, concise, and actionable — and can be delivered via email, in-app notification, or exported to PDF/Excel.
+
+**Value delivered:** Saves senior management hours of report compilation. Ensures leadership always has an accurate, up-to-date view of workforce performance without relying on line managers to manually produce reports.
+
+---
+
+### AI Agent 5 — Continuous Task Follow-Up Agent
+
+Maintains persistent tracking of every assigned task through its full lifecycle. When tasks remain unresolved past expected completion windows, the agent proactively follows up with the assigned employee, logs the follow-up activity, and where necessary escalates to supervisors or triggers a formal review flag. The agent maintains a full follow-up audit trail so management can see exactly when an issue was flagged and what action was taken.
+
+**Value delivered:** Ensures nothing falls through the cracks. Creates a culture of accountability without requiring managers to micromanage every open item on the board.
+
+---
+
+### AI Suite Pricing
+
+| Module                            | Price per Agent |
+| --------------------------------- | --------------- |
+| Daily Task Allocation Agent       | 25,000          |
+| Task Monitoring & Reminders Agent | 25,000          |
+| Performance & KPI Analysis Agent  | 25,000          |
+| Management Reporting Agent        | 25,000          |
+| Continuous Task Follow-Up Agent   | 25,000          |
+| **Full AI Suite (all 5 agents)**  | **125,000**     |
+
+> Agents are licensed on top of the base platform subscription. Each agent module is activatable independently, so clients can start with one agent and expand over time. Volume discounts available for enterprise contracts.
+
+---
+
 ## Pricing Model Options
 
 The platform supports several commercial pricing structures depending on your go-to-market strategy:
@@ -230,6 +293,8 @@ The platform has no embedded branding in the codebase. You can fully white-label
 5. **Excel exports everywhere** — Every major data set can be exported to Excel — a feature that HR and finance teams demand and many competitors charge extra for.
 
 6. **Role-based access** — Admins see everything; regular users see only their own data. This is ready out of the box.
+
+7. **AI-ready architecture** — The platform's activity logs, attendance records, and task data form the exact dataset AI agents need to operate. The planned AI Intelligence Layer plugs directly into this data to deliver automated task allocation, KPI analysis, and management reporting — no separate data pipeline required.
 
 ---
 

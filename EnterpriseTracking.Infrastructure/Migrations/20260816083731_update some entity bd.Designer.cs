@@ -3,6 +3,7 @@ using System;
 using EnterpriseTracking.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EnterpriseTracking.Infrastructure.Migrations
 {
     [DbContext(typeof(EnterpriseTrackingContext))]
-    partial class EnterpriseTrackingContextModelSnapshot : ModelSnapshot
+    [Migration("20260816083731_update some entity bd")]
+    partial class updatesomeentitybd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,10 +101,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("CompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -178,8 +177,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
-
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -219,96 +216,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                     b.ToTable("Attendances");
                 });
 
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.Company", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSuspended")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RcNumber")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.ToTable("Companies");
-                });
-
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.CompanySubscription", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BillingCycle")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("CurrentPeriodEndsAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PaystackCustomerCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PaystackSubscriptionCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Plan")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("SeatLimit")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("TrialEndsAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId")
-                        .IsUnique();
-
-                    b.ToTable("CompanySubscriptions");
-                });
-
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.MapAppCatories", b =>
                 {
                     b.Property<string>("Id")
@@ -344,60 +251,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("MapAppCatories");
-                });
-
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.PaymentTransaction", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text");
-
-                    b.Property<long>("AmountKobo")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("CompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Plan")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Reference")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Seats")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("Reference")
-                        .IsUnique();
-
-                    b.ToTable("PaymentTransactions");
                 });
 
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.ProofOfActivity", b =>
@@ -469,10 +322,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ClientSecretHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CompanyId")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -578,10 +427,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -608,8 +453,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -760,17 +603,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.ApplicationUser", b =>
-                {
-                    b.HasOne("EnterpriseTracking.Core.Entities.Company", "Company")
-                        .WithMany("Users")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.Attendance", b =>
                 {
                     b.HasOne("EnterpriseTracking.Core.Entities.ApplicationUser", "User")
@@ -782,17 +614,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.CompanySubscription", b =>
-                {
-                    b.HasOne("EnterpriseTracking.Core.Entities.Company", "Company")
-                        .WithOne("Subscription")
-                        .HasForeignKey("EnterpriseTracking.Core.Entities.CompanySubscription", "CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.MapAppCatories", b =>
                 {
                     b.HasOne("EnterpriseTracking.Core.Entities.ActivityCategory", "Category")
@@ -802,17 +623,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.PaymentTransaction", b =>
-                {
-                    b.HasOne("EnterpriseTracking.Core.Entities.Company", "Company")
-                        .WithMany("Payments")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.ProofOfActivity", b =>
@@ -855,17 +665,9 @@ namespace EnterpriseTracking.Infrastructure.Migrations
 
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.Voucher", b =>
                 {
-                    b.HasOne("EnterpriseTracking.Core.Entities.Company", "Company")
-                        .WithMany("Vouchers")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("EnterpriseTracking.Core.Entities.ApplicationUser", "User")
                         .WithOne("Voucher")
                         .HasForeignKey("EnterpriseTracking.Core.Entities.Voucher", "UserId");
-
-                    b.Navigation("Company");
 
                     b.Navigation("User");
                 });
@@ -934,17 +736,6 @@ namespace EnterpriseTracking.Infrastructure.Migrations
 
                     b.Navigation("Voucher")
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("EnterpriseTracking.Core.Entities.Company", b =>
-                {
-                    b.Navigation("Payments");
-
-                    b.Navigation("Subscription");
-
-                    b.Navigation("Users");
-
-                    b.Navigation("Vouchers");
                 });
 
             modelBuilder.Entity("EnterpriseTracking.Core.Entities.MapAppCatories", b =>

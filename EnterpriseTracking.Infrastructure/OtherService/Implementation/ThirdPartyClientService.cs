@@ -18,11 +18,13 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
     {
         private readonly EnterpriseTrackingContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ITenantContext _tenantContext;
 
-        public ThirdPartyClientService(EnterpriseTrackingContext context, IConfiguration configuration)
+        public ThirdPartyClientService(EnterpriseTrackingContext context, IConfiguration configuration, ITenantContext tenantContext)
         {
             _context = context;
             _configuration = configuration;
+            _tenantContext = tenantContext;
         }
 
         public async Task<ResponseDto<CreatedClientDto>> CreateClientAsync(CreateThirdPartyClientReq req, string adminId)
@@ -34,6 +36,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             var entity = new ThirdPartyClient
             {
                 Id = Guid.NewGuid().ToString(),
+                CompanyId = _tenantContext.CompanyId ?? throw new InvalidOperationException("A company account is required"),
                 AppName = req.AppName,
                 ContactEmail = req.ContactEmail,
                 ClientId = clientId,
@@ -91,7 +94,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
 
         public async Task<ResponseDto<string>> RevokeClientAsync(string id)
         {
-            var client = await _context.ThirdPartyClients.FindAsync(id);
+            var client = await _context.ThirdPartyClients.FirstOrDefaultAsync(x => x.Id == id);
             if (client == null || client.IsDeleted)
                 return new ResponseDto<string> { StatusCode = 404, DisplayMessage = "Client not found." };
 
@@ -104,7 +107,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
 
         public async Task<ResponseDto<CreatedClientDto>> RegenerateSecretAsync(string id)
         {
-            var client = await _context.ThirdPartyClients.FindAsync(id);
+            var client = await _context.ThirdPartyClients.FirstOrDefaultAsync(x => x.Id == id);
             if (client == null || client.IsDeleted)
                 return new ResponseDto<CreatedClientDto> { StatusCode = 404, DisplayMessage = "Client not found." };
 
@@ -133,6 +136,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         public async Task<ResponseDto<ClientTokenDto>> ExchangeTokenAsync(ClientTokenRequest req)
         {
             var client = await _context.ThirdPartyClients
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(c => c.ClientId == req.ClientId && !c.IsDeleted && c.IsActive);
 
             if (client == null)
@@ -167,6 +171,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
                 new(JwtRegisteredClaimNames.Sub, client.ClientId),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new("client_name", client.AppName),
+                new("company_id", client.CompanyId),
                 new(ClaimTypes.Role, "ThirdParty")
             };
             foreach (var scope in scopes)

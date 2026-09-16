@@ -18,14 +18,22 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly EnterpriseTrackingContext _context;
         private readonly IHelperServ _helperServ;
+        private readonly ITenantContext _tenantContext;
 
         public AccountRepo(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
-            EnterpriseTrackingContext context,IHelperServ helperServ)
+            EnterpriseTrackingContext context, IHelperServ helperServ, ITenantContext tenantContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _helperServ = helperServ;
+            _tenantContext = tenantContext;
+        }
+
+        private IQueryable<ApplicationUser> TenantUsers()
+        {
+            var users = _context.Users.AsQueryable();
+            return _tenantContext.IsSuperAdmin ? users : users.Where(x => x.CompanyId == _tenantContext.CompanyId);
         }
         public async Task<bool> AddRoleAsync(ApplicationUser user, string Role)
         {
@@ -75,7 +83,7 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
 
         public async Task<ApplicationUser?> FindUserByEmailAsync(string email)
         {
-            var findUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+            var findUser = await TenantUsers().FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
             if (findUser == null)
             {
                 return null;
@@ -84,7 +92,11 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
         }
         public async Task<ApplicationUser?> FindUserByuSERNAMEAsync(string userName)
         {
-            var findUser = await _context.Users.Include(u=>u.Voucher).FirstOrDefaultAsync(u=>u.UserName.ToLower() == userName.ToLower());
+            var findUser = await _context.Users
+                .IgnoreQueryFilters()
+                .Include(u => u.Company)
+                .Include(u => u.Voucher)
+                .FirstOrDefaultAsync(u => u.UserName.ToLower() == userName.ToLower());
             if (findUser == null)
             {
                 return null;
@@ -94,12 +106,12 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
 
         public async Task<ApplicationUser> FindUserByIdAsync(string id)
         {
-            var findUser = await _userManager.FindByIdAsync(id);
+            var findUser = await TenantUsers().FirstOrDefaultAsync(x => x.Id == id);
             return findUser;
         }
         public async Task<DisplayFindUserDTO> FindUserByIdSingleAsync(string id)
         {
-            var findUser = await _context.Users.Where(u => u.Id == id).Select(u => new DisplayFindUserDTO
+            var findUser = await TenantUsers().Where(u => u.Id == id).Select(u => new DisplayFindUserDTO
             {
                 Id = u.Id,
                 Email = u.Email,
@@ -123,7 +135,7 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
     UserStatus? status,
     bool? isVoucherLinked)
         {
-            var query = _context.Users.AsQueryable();
+            var query = TenantUsers();
 
             // Filter by name or email
             if (!string.IsNullOrWhiteSpace(nameOrEmail))
@@ -235,7 +247,7 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
 
         public async Task<byte[]> ExportUsersAsync(ExportUserRequest request)
         {
-            var query = _context.Users.AsNoTracking().AsQueryable();
+            var query = TenantUsers().AsNoTracking();
 
             
 
@@ -326,7 +338,7 @@ namespace EnterpriseTracking.Infrastructure.Repository.Implementation
         public async Task<UserGrowthMetricsDto> GetUserGrowthMetricsAsync()
         {
 
-            var currentUsers =  await _context.Users
+            var currentUsers =  await TenantUsers()
                 .AsNoTracking()
                 .ToListAsync();
 

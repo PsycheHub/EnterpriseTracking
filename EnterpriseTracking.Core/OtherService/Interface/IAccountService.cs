@@ -7,6 +7,7 @@ namespace EnterpriseTracking.Core.OtherService.Interface
 {
     public interface IAccountService
     {
+        Task<ResponseDto<LoginResultDto>> RegisterCompany(CompanyRegistrationDto request);
 
         Task<ResponseDto<string>> ResetPassword(string email);
 

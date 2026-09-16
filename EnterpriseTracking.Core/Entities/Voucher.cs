@@ -9,6 +9,8 @@ namespace EnterpriseTracking.Core.Entities
 {
     public class  Voucher : BaseEntity
     {
+        public string CompanyId { get; set; } = string.Empty;
+        public Company Company { get; set; } = null!;
         public string Code { get; set; }
         public string? UserId { get; set; }
         public ApplicationUser User { get; set; }

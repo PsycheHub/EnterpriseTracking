@@ -6,7 +6,10 @@ using EnterpriseTracking.Core.Entities;
 using EnterpriseTracking.Core.Enum;
 using EnterpriseTracking.Core.OtherService.Interface;
 using EnterpriseTracking.Core.Repository.Interface;
+using EnterpriseTracking.Infrastructure.Context;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -26,6 +29,9 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
         private readonly IGenerateJwt _generateJwt;
         private readonly IEncryptionService _encryption;
         private readonly IConfiguration _configuration;
+        private readonly global::EnterpriseTracking.Infrastructure.Context.EnterpriseTrackingContext _context;
+        private readonly ITenantContext _tenantContext;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public AccountService(
             IAccountRepo accountRepo,
@@ -36,7 +42,10 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             IEncryptionService encryption,
             IConfiguration configuration,
             IEnterpriseTrackingGenericRepo<Voucher> voucherRepo,
-            IEnterpriseTrackingGenericRepo<AgentSession> agentSessionRepo)
+            IEnterpriseTrackingGenericRepo<AgentSession> agentSessionRepo,
+            global::EnterpriseTracking.Infrastructure.Context.EnterpriseTrackingContext context,
+            ITenantContext tenantContext,
+            UserManager<ApplicationUser> userManager)
         {
             _accountRepo = accountRepo;
             _logger = logger;
@@ -47,6 +56,82 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             _encryption = encryption;
             _voucherRepo = voucherRepo;
             _agentSessionRepo = agentSessionRepo;
+            _context = context;
+            _tenantContext = tenantContext;
+            _userManager = userManager;
+        }
+
+        public async Task<ResponseDto<LoginResultDto>> RegisterCompany(CompanyRegistrationDto request)
+        {
+            var response = new ResponseDto<LoginResultDto>();
+            if (!request.AcceptTerms)
+            {
+                response.StatusCode = StatusCodes.Status400BadRequest;
+                response.DisplayMessage = "Terms and Conditions must be accepted";
+                return response;
+            }
+
+            var normalizedCompanyEmail = request.CompanyEmail.Trim().ToLowerInvariant();
+            var normalizedAdminEmail = request.AdminEmail.Trim().ToLowerInvariant();
+            if (await _context.Set<Company>().AnyAsync(x => x.Email == normalizedCompanyEmail) ||
+                await _context.Users.IgnoreQueryFilters().AnyAsync(x => x.NormalizedEmail == normalizedAdminEmail.ToUpperInvariant()))
+            {
+                response.StatusCode = StatusCodes.Status409Conflict;
+                response.DisplayMessage = "A company or administrator with this email already exists";
+                return response;
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var company = new Company
+            {
+                Name = request.CompanyName.Trim(),
+                Email = normalizedCompanyEmail,
+                RcNumber = request.RcNumber?.Trim()
+            };
+            _context.Set<Company>().Add(company);
+            await _context.SaveChangesAsync();
+
+            _context.Set<CompanySubscription>().Add(new CompanySubscription
+            {
+                CompanyId = company.Id,
+                Plan = "Trial",
+                SeatLimit = request.RequestedSeats,
+                IsActive = true,
+                TrialEndsAt = DateTime.UtcNow.AddDays(14)
+            });
+
+            var admin = new ApplicationUser
+            {
+                CompanyId = company.Id,
+                Email = normalizedAdminEmail,
+                UserName = normalizedAdminEmail,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                Status = UserStatus.Active.ToString(),
+                EmailConfirmed = true
+            };
+            var createResult = await _userManager.CreateAsync(admin, request.Password);
+            if (!createResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                response.StatusCode = StatusCodes.Status400BadRequest;
+                response.DisplayMessage = "Company registration failed";
+                response.ErrorMessages = createResult.Errors.Select(x => x.Description).ToList();
+                return response;
+            }
+
+            await _userManager.AddToRoleAsync(admin, "CompanyAdmin");
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            response.StatusCode = StatusCodes.Status201Created;
+            response.DisplayMessage = "Company registered successfully";
+            response.Result = new LoginResultDto
+            {
+                Jwt = await _generateJwt.GenerateToken(admin),
+                UserRole = await _userManager.GetRolesAsync(admin)
+            };
+            return response;
         }
 
         public async Task<ResponseDto<string>> RegisterUser(SignUp signUp, string Role)
@@ -54,6 +139,33 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
             var response = new ResponseDto<string>();
             try
             {
+                if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId))
+                {
+                    response.StatusCode = StatusCodes.Status403Forbidden;
+                    response.DisplayMessage = "A company account is required";
+                    return response;
+                }
+
+                var subscription = await _context.Set<CompanySubscription>()
+                    .FirstOrDefaultAsync(x => x.CompanyId == _tenantContext.CompanyId);
+                var subscriptionEndsAt = subscription?.CurrentPeriodEndsAt ?? subscription?.TrialEndsAt;
+                var subscriptionExpired = subscriptionEndsAt.HasValue && subscriptionEndsAt.Value < DateTime.UtcNow;
+                var adminRoleIds = await _context.Roles
+                    .Where(x => x.Name == "CompanyAdmin" || x.Name == "Admin" || x.Name == "SuperAdmin")
+                    .Select(x => x.Id)
+                    .ToListAsync();
+                var adminUserIds = _context.UserRoles
+                    .Where(x => adminRoleIds.Contains(x.RoleId))
+                    .Select(x => x.UserId);
+                var occupiedSeats = await _context.Users.CountAsync(x =>
+                    x.CompanyId == _tenantContext.CompanyId && !x.IsDeleted && !x.IsSuspend && !adminUserIds.Contains(x.Id));
+                if (subscription == null || !subscription.IsActive || subscriptionExpired || occupiedSeats >= subscription.SeatLimit)
+                {
+                    response.StatusCode = StatusCodes.Status402PaymentRequired;
+                    response.DisplayMessage = "Your active seat limit has been reached. Purchase more seats to invite another user.";
+                    return response;
+                }
+
                 var checkUserExist = await _accountRepo.FindUserByEmailAsync(signUp.Email);
                 if (checkUserExist != null)
                 {
@@ -77,6 +189,7 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
                 mapAccount.FirstName = signUp.FirstName;
                 mapAccount.LastName = signUp.LastName;
                 mapAccount.UserName = _helperServ.UsernameGenerator(signUp.Email);
+                mapAccount.CompanyId = _tenantContext.CompanyId;
 
 
                 var generatePassowrd = _helperServ.GenerateRandomString(8);
@@ -257,6 +370,26 @@ Password :: {generatePassowrd},
                     response.DisplayMessage = "Error";
                     return response;
                 }
+                if (checkUserExist.Company?.IsSuspended == true)
+                {
+                    response.ErrorMessages = new List<string>() { "Company account is suspended, contact OGAVIX support" };
+                    response.StatusCode = StatusCodes.Status403Forbidden;
+                    response.DisplayMessage = "Error";
+                    return response;
+                }
+
+                var companySubscription = await _context.Set<CompanySubscription>()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(x => x.CompanyId == checkUserExist.CompanyId);
+                var companySubscriptionEndsAt = companySubscription?.CurrentPeriodEndsAt ?? companySubscription?.TrialEndsAt;
+                if (companySubscription != null && (!companySubscription.IsActive ||
+                    (companySubscriptionEndsAt.HasValue && companySubscriptionEndsAt.Value < DateTime.UtcNow)))
+                {
+                    response.ErrorMessages = new List<string>() { "Company subscription has expired" };
+                    response.StatusCode = StatusCodes.Status402PaymentRequired;
+                    response.DisplayMessage = "Error";
+                    return response;
+                }
 
                 var checkPassword = await _accountRepo.CheckAccountPassword(checkUserExist, signIn.Password);
                 if (checkPassword == false)
@@ -280,7 +413,7 @@ Password :: {generatePassowrd},
                 }
 
                 var getUserRole = await _accountRepo.GetUserRoles(checkUserExist);
-                if (!getUserRole.Contains("Admin"))
+                if (!getUserRole.Any(x => x == "Admin" || x == "CompanyAdmin" || x == "SuperAdmin"))
                 {
                     response.ErrorMessages = new List<string>() { "User is not an admin" };
                     response.StatusCode = 501;

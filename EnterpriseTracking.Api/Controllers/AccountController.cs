@@ -21,7 +21,17 @@ namespace EnterpriseTracking.Api.Controllers
             _accountService = accountService;
         }
 
+        /// <summary>Create an isolated company account and its first company administrator.</summary>
+        [AllowAnonymous]
+        [HttpPost("company/register")]
+        public async Task<IActionResult> RegisterCompany(CompanyRegistrationDto req)
+        {
+            var result = await _accountService.RegisterCompany(req);
+            return HandleResponse(result);
+        }
+
         /// <summary>Invite a new user by email. Sends an invitation email with setup instructions.</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin")]
         [HttpPost("user/invite")]
         public async Task<IActionResult> RegisterUser(SignUp req)
         {
@@ -48,6 +58,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Trigger a password reset email for the given user account.</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpPost("user/reset_password")]
         public async Task<IActionResult> ResetPasswordAysnc(string email)
         {
@@ -56,6 +67,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Suspend a user account — the user will be blocked from logging in.</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpPost("user/suspend")]
         public async Task<IActionResult> SuspendUser(string email)
         {
@@ -64,6 +76,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Lift a suspension and restore access for the given user.</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpPost("user/unsuspend")]
         public async Task<IActionResult> UnsuspendUser(string email)
         {
@@ -72,6 +85,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Change the role of a user (e.g. User → Admin).</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpPost("user/role_change")]
         public async Task<IActionResult> UserRoleUpdateDto(UserRoleUpdateDto req)
         {
@@ -80,6 +94,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Export user records to an Excel (.xlsx) file.</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpPost("user/export")]
         public async Task<IActionResult> ExportUserInfo(ExportUserRequest request)
         {
@@ -102,6 +117,7 @@ namespace EnterpriseTracking.Api.Controllers
 
         /// <summary>Return aggregate user growth metrics (total, active, suspended, invited).</summary>
         [Authorize(Policy = "UsersRead")]
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpGet("user/metrics")]
         public async Task<IActionResult> GetUserGrowthMetrics()
         {
@@ -111,6 +127,7 @@ namespace EnterpriseTracking.Api.Controllers
 
         /// <summary>Return the full profile of a single user by their ID.</summary>
         [Authorize(Policy = "UsersRead")]
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpGet("user/info")]
         public async Task<IActionResult> GetUserbyIdAsync(string Id)
         {
@@ -120,6 +137,7 @@ namespace EnterpriseTracking.Api.Controllers
 
         /// <summary>Return a paginated list of all users. Supports filtering by name/email, status, and voucher linkage.</summary>
         [Authorize(Policy = "UsersRead")]
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpGet("user/all")]
         public async Task<IActionResult> GetPaginatedUser(int pageNumber,
     int perPageSize,
@@ -133,6 +151,7 @@ namespace EnterpriseTracking.Api.Controllers
         }
 
         /// <summary>Permanently delete a user account (soft delete).</summary>
+        [Authorize(Roles = "CompanyAdmin,Admin,SuperAdmin")]
         [HttpDelete("user/delete")]
         public async Task<IActionResult> DeleteUser(string email)
         {

@@ -21,39 +21,44 @@ namespace EnterpriseTracking.Api.Seeder
                 dbContext.Database.Migrate();
             }
 
-            if (!dbContext.Roles.Any())
+            var roleManager = app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            List<string> roles = new() { "SuperAdmin", "CompanyAdmin", "Admin", "User" };
+            foreach (var role in roles)
             {
-                await dbContext.Database.EnsureCreatedAsync();
-                var roleManager = app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-                List<string> roles = new() { "Admin", "User" };
-                foreach (var role in roles)
+                if (!await roleManager.RoleExistsAsync(role))
                 {
-                    await roleManager.CreateAsync(new IdentityRole { Name = role });
+                    await roleManager.CreateAsync(new IdentityRole(role));
                 }
-
             }
-            if (!dbContext.Users.Any())
+
+            const string platformEmail = "superadmin@ogavix.com";
+            var platformCompany = await dbContext.Set<Company>().FirstOrDefaultAsync(x => x.Email == platformEmail);
+            if (platformCompany == null)
             {
-                var getAccountRepo = app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                
-                var mapAccount = new ApplicationUser();
+                platformCompany = new Company { Name = "OGAVIX Platform", Email = platformEmail };
+                dbContext.Set<Company>().Add(platformCompany);
+                await dbContext.SaveChangesAsync();
+            }
 
-                mapAccount.Email = "info@gomlearning.app.com";
-                mapAccount.FirstName = "gomlearning";
-                mapAccount.LastName = "gomlearning";
-                mapAccount.UserName = "info@gomlearning.app.com";
-
-
-                var generatePassowrd = "Gomlearning@1";
-                var createUser = await getAccountRepo.CreateAsync(mapAccount, generatePassowrd);
-                if (createUser != null)
+            var userManager = app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var superAdmin = await dbContext.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == platformEmail);
+            if (superAdmin == null)
+            {
+                superAdmin = new ApplicationUser
                 {
-                    await getAccountRepo.AddToRoleAsync(mapAccount, "Admin");
+                    Email = platformEmail,
+                    UserName = platformEmail,
+                    FirstName = "OGAVIX",
+                    LastName = "Super Admin",
+                    CompanyId = platformCompany.Id,
+                    Status = "Active"
+                };
+                var configuredPassword = Environment.GetEnvironmentVariable("OGAVIX_SUPERADMIN_PASSWORD") ?? "ChangeMe@2026!";
+                var createUser = await userManager.CreateAsync(superAdmin, configuredPassword);
+                if (createUser.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
                 }
-               
-
-
-
             }
             await dbContext.SaveChangesAsync();
         }

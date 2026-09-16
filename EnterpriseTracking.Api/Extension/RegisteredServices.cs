@@ -10,6 +10,10 @@ namespace ZedSystem.Api.Extension
     {
         public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddHttpContextAccessor();
+            services.AddHttpClient();
+            services.AddScoped<ITenantContext, TenantContext>();
+            services.AddScoped<IBillingService, BillingService>();
             services.AddScoped<IAccountRepo, AccountRepo>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped(typeof(IEnterpriseTrackingGenericRepo<>), typeof(EnterpriseTrackingGenericRepo<>));

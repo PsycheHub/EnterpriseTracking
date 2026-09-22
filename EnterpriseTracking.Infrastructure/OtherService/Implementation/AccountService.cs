@@ -81,55 +81,67 @@ namespace EnterpriseTracking.Infrastructure.OtherService.Implementation
                 return response;
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-            var company = new Company
+            var executionStrategy = _context.Database.CreateExecutionStrategy();
+            var registration = await executionStrategy.ExecuteAsync(async () =>
             {
-                Name = request.CompanyName.Trim(),
-                Email = normalizedCompanyEmail,
-                RcNumber = request.RcNumber?.Trim()
-            };
-            _context.Set<Company>().Add(company);
-            await _context.SaveChangesAsync();
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                var company = new Company
+                {
+                    Name = request.CompanyName.Trim(),
+                    Email = normalizedCompanyEmail,
+                    RcNumber = request.RcNumber?.Trim()
+                };
+                _context.Set<Company>().Add(company);
+                await _context.SaveChangesAsync();
 
-            _context.Set<CompanySubscription>().Add(new CompanySubscription
-            {
-                CompanyId = company.Id,
-                Plan = "Trial",
-                SeatLimit = request.RequestedSeats,
-                IsActive = true,
-                TrialEndsAt = DateTime.UtcNow.AddDays(14)
+                _context.Set<CompanySubscription>().Add(new CompanySubscription
+                {
+                    CompanyId = company.Id,
+                    Plan = "Trial",
+                    SeatLimit = request.RequestedSeats,
+                    IsActive = true,
+                    TrialEndsAt = DateTime.UtcNow.AddDays(14)
+                });
+
+                var admin = new ApplicationUser
+                {
+                    CompanyId = company.Id,
+                    Email = normalizedAdminEmail,
+                    UserName = normalizedAdminEmail,
+                    FirstName = request.FirstName.Trim(),
+                    LastName = request.LastName.Trim(),
+                    Status = UserStatus.Active.ToString(),
+                    EmailConfirmed = true
+                };
+                var createResult = await _userManager.CreateAsync(admin, request.Password);
+                if (!createResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return (
+                        Admin: (ApplicationUser?)null,
+                        Errors: createResult.Errors.Select(x => x.Description).ToList());
+                }
+
+                await _userManager.AddToRoleAsync(admin, "CompanyAdmin");
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (Admin: (ApplicationUser?)admin, Errors: new List<string>());
             });
 
-            var admin = new ApplicationUser
+            if (registration.Admin == null)
             {
-                CompanyId = company.Id,
-                Email = normalizedAdminEmail,
-                UserName = normalizedAdminEmail,
-                FirstName = request.FirstName.Trim(),
-                LastName = request.LastName.Trim(),
-                Status = UserStatus.Active.ToString(),
-                EmailConfirmed = true
-            };
-            var createResult = await _userManager.CreateAsync(admin, request.Password);
-            if (!createResult.Succeeded)
-            {
-                await transaction.RollbackAsync();
                 response.StatusCode = StatusCodes.Status400BadRequest;
                 response.DisplayMessage = "Company registration failed";
-                response.ErrorMessages = createResult.Errors.Select(x => x.Description).ToList();
+                response.ErrorMessages = registration.Errors;
                 return response;
             }
-
-            await _userManager.AddToRoleAsync(admin, "CompanyAdmin");
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             response.StatusCode = StatusCodes.Status201Created;
             response.DisplayMessage = "Company registered successfully";
             response.Result = new LoginResultDto
             {
-                Jwt = await _generateJwt.GenerateToken(admin),
-                UserRole = await _userManager.GetRolesAsync(admin)
+                Jwt = await _generateJwt.GenerateToken(registration.Admin),
+                UserRole = await _userManager.GetRolesAsync(registration.Admin)
             };
             return response;
         }
